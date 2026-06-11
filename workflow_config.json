@@ -1,0 +1,55 @@
+{
+  "workflow_key": "assisto_triage_routing_engine",
+  "workflow_data": {
+    "initial_state": {
+      "input_parameters": [{"key": "query", "type": "string", "required": true}]
+    },
+    "nodes": [
+      {
+        "id": "node_01_analyze_intent",
+        "name": "analyze_intent",
+        "type": "execution_task",
+        "handler_api": "analyze_intent_api",
+        "inputs": {"user_query": "$.initial_state.query"},
+        "outputs": {"route_type": "$.task_output.route_type"},
+        "transitions": [
+          {"condition_expression": "route_type == 'requires_context'", "next_node": "node_02_real_vector_search"},
+          {"condition_expression": "route_type == 'fast_path'", "next_node": "node_04_fast_reply"}
+        ]
+      },
+      {
+        "id": "node_02_real_vector_search",
+        "name": "real_vector_search",
+        "type": "execution_task",
+        "handler_api": "execute_vector_search_api",
+        "inputs": {"search_phrase": "$.initial_state.query"},
+        "outputs": {"top_3_matches": "$.task_output.matches"},
+        "transitions": [
+          {"condition_expression": "len(top_3_matches) >= 0", "next_node": "node_03_real_llm_synthesizer"}
+        ]
+      },
+      {
+        "id": "node_03_real_llm_synthesizer",
+        "name": "real_llm_synthesizer",
+        "type": "execution_task",
+        "handler_api": "execute_failover_synthesis_api",
+        "inputs": {
+          "prompt_query": "$.initial_state.query",
+          "context_data": "$.node_02_real_vector_search.top_3_matches"
+        },
+        "outputs": {"final_response": "$.task_output.final_markdown_text"},
+        "transitions": []
+      },
+      {
+        "id": "node_04_fast_reply",
+        "name": "fast_reply",
+        "type": "execution_task",
+        "handler_api": "fast_reply",
+        "inputs": {"user_query": "$.initial_state.query"},
+        "outputs": {"final_response": "$.task_output.final_response"},
+        "transitions": []
+      }
+    ],
+    "terminal_states": ["node_03_real_llm_synthesizer", "node_04_fast_reply"]
+  }
+}
