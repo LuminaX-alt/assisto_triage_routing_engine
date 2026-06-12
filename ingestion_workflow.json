@@ -1,0 +1,49 @@
+{
+  "pdf_ingestion_pipeline": {
+    "data": [
+      {
+        "name": "extract_pdf_text",
+        "type": "functions",
+        "input": [
+          { "file_path": "file_path" }
+        ],
+        "output": [
+          { "status": "status" },
+          { "document_text": "document_text" }
+        ],
+        "function_type": "python"
+      },
+      {
+        "name": "chunk_text",
+        "type": "functions",
+        "input": [
+          { "document_text": "document_text" }
+        ],
+        "output": [
+          { "status": "status" },
+          { "text_chunks": "text_chunks" }
+        ],
+        "function_type": "python"
+      },
+      {
+        "name": "embed_and_upsert",
+        "type": "functions",
+        "input": [
+          { "text_chunks": "text_chunks" }
+        ],
+        "output": [
+          { "status": "status" },
+          { "upsert_count": "upsert_count" }
+        ],
+        "function_type": "python"
+      }
+    ],
+    "initialInput": [
+      "file_path"
+    ],
+    "finalOutput": [
+      "status",
+      "upsert_count"
+    ]
+  }
+}
